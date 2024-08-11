@@ -75,6 +75,12 @@ public class UserRepository implements CrudRepository<UserModel, Integer>  {
 
     public UserModel update(UserModel user) {
         String updateSQL = "UPDATE car_shop.user SET username = ?, password = ?, role = ? WHERE id = ? RETURNING id";
+        List<UserModel> userList = findByUsernameForUpdate(user.getUsername());
+        for (UserModel u : userList) {
+            if (!user.getId().equals(u.getId())) {
+                throw new RuntimeException("Не удалось обновить пользователя");
+            }
+        }
         if (!isUsernameUnique(user.getUsername())) {
             throw new IllegalArgumentException("Такой пользователь существует");
         }
@@ -152,6 +158,30 @@ public class UserRepository implements CrudRepository<UserModel, Integer>  {
             e.printStackTrace();
         }
         return false;
+    }
+    private List<UserModel> findByUsernameForUpdate(String username) {
+        List<UserModel> users = new ArrayList<>();
+        String findByUsernameSQL = "SELECT * FROM car_shop.user WHERE username = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(findByUsernameSQL)) {
+            statement.setString(1, username);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                UserModel user = UserModel.builder()
+                        .id(resultSet.getInt("id"))
+                        .username(resultSet.getString("username"))
+                        .password(resultSet.getString("password"))
+                        .role(RoleEnum.valueOf(resultSet.getString("role")))
+                        .build();
+                users.add(user);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return users;
     }
 
     public UserModel findByUsername(String username) {
