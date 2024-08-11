@@ -10,8 +10,9 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class AuditModel {
-    private final Integer id;
-    private final String username;
-    private final String action;
-    private final LocalDateTime timestamp;
+    private Integer id;
+    private String username;
+    private String action;
+    private LocalDateTime timestamp;
+    private Integer userId;
 }

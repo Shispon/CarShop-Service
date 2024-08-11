@@ -1,3 +1,6 @@
+import createDBAndMigreation.DataBaseInitializer;
+import createDBAndMigreation.DockerComposeRunner;
+import createDBAndMigreation.LiquiBaseRunner;
 import menu.*;
 import repository.*;
 import service.*;
@@ -7,6 +10,17 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
+        DockerComposeRunner.runDockerCompose();
+        // Подождите несколько секунд, чтобы дать время на запуск контейнера PostgreSQL
+        try {
+            Thread.sleep(10000); // 10 секунд ожидания, если необходимо больше времени, увеличьте это значение
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        DataBaseInitializer.run();
+        LiquiBaseRunner.run();
+
         Scanner scanner = new Scanner(System.in);
         UserService userService = new UserService(new UserRepository());
         CarService carService = new CarService(new CarRepository());
@@ -15,9 +29,9 @@ public class Main {
         AuditService auditService = new AuditService(new AuditRepository());
 
         UserDisplay userDisplay = new UserDisplay(userService);
-        CarDisplay carDisplay = new CarDisplay(carService, auditService);
-        OrderDisplay orderDisplay = new OrderDisplay(orderBuyService, auditService);
-        RequestDisplay administrativeOrderDisplay = new RequestDisplay(requestService, auditService);
+        CarDisplay carDisplay = new CarDisplay(carService, auditService, userService);
+        OrderDisplay orderDisplay = new OrderDisplay(orderBuyService, auditService, userService);
+        RequestDisplay administrativeOrderDisplay = new RequestDisplay(requestService, auditService, userService);
         AuditDisplay auditDisplay = new AuditDisplay(auditService);
 
 

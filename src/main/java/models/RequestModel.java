@@ -8,12 +8,14 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class RequestModel {
-    private final Integer id;
-    private final String carBrand;
-    private final String carModel;
-    private final String username;
-    private final ServiceEnum serviceType;
-    private final StatusEnum status;
+    private Integer id;
+    private Integer userId;
+    private Integer carId;
+    private String carBrand;
+    private String carModel;
+    private String username;
+    private ServiceEnum serviceType;
+    private StatusEnum status;
 
     public RequestModel(String carBrand, String carModel, String username, ServiceEnum serviceType, StatusEnum status) {
         this.id = -1;

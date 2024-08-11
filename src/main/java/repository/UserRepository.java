@@ -1,60 +1,181 @@
 package repository;
 
+import models.RoleEnum;
 import models.UserModel;
 
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserRepository implements CrudRepository<UserModel, Integer> {
+public class UserRepository implements CrudRepository<UserModel, Integer>  {
     private final List<UserModel> userList= new ArrayList<>();
     private Integer id = 0;
 
-    public UserModel create (UserModel user) {
-        if (!isUsernameUnique(user.getUsername())) {
-            throw new IllegalArgumentException("Такой пользователь сущетсвует");
+    public boolean isUsernameUnique(String username) {
+        String query = "SELECT COUNT(*) FROM car_shop.user WHERE username = ?";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, username);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt(1) == 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        UserModel newUser = user.toBuilder()
-                        .id(++id)
+        return false;
+    }
+
+    // Создание нового пользователя
+    public UserModel create(UserModel user) {
+        if (!isUsernameUnique(user.getUsername())) {
+            throw new IllegalArgumentException("Такой пользователь существует");
+        }
+        String insertSQL = "INSERT INTO car_shop.user (username, password, role) VALUES (?, ?, ?) RETURNING id";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(insertSQL)) {
+            statement.setString(1, user.getUsername());
+            statement.setString(2, user.getPassword());
+            statement.setString(3, user.getRole().toString());
+
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                int newId = resultSet.getInt("id");
+                return user.toBuilder()
+                        .id(newId)
                         .build();
-        userList.add(newUser);
-        return newUser;
-    }
-
-    public UserModel read(Integer id) {
-        return userList.stream()
-                .filter(user -> user.getId().equals(id))
-                .findFirst()
-                .orElse(null);
-    }
-
-    public UserModel update (UserModel user) {
-        UserModel existUser = read(user.getId());
-        if (existUser != null) {
-            UserModel updateUser = existUser.toBuilder()
-                    .username(user.getUsername())
-                    .password(user.getPassword())
-                    .role(user.getRole())
-                    .build();
-            userList.set(user.getId(), updateUser);
-            return updateUser;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Не удалось создать пользователя");
         }
         return null;
     }
 
-    public boolean delete(Integer id) {
-       return userList.removeIf(user -> user.getId().equals(id));
+    public UserModel read(Integer id) {
+        String query = "SELECT id, username, password, role FROM car_shop.user WHERE id = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, id);
+
+             ResultSet resultSet = statement.executeQuery();
+                if (resultSet.next()) {
+                    return UserModel.builder()
+                            .id(resultSet.getInt("id"))
+                            .username(resultSet.getString("username"))
+                            .password(resultSet.getString("password"))
+                            .role(RoleEnum.valueOf(resultSet.getString("role")))
+                            .build();
+                }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
+
+    public UserModel update(UserModel user) {
+        String updateSQL = "UPDATE car_shop.user SET username = ?, password = ?, role = ? WHERE id = ? RETURNING id";
+        if (!isUsernameUnique(user.getUsername())) {
+            throw new IllegalArgumentException("Такой пользователь существует");
+        }
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(updateSQL)) {
+            statement.setString(1, user.getUsername());
+            statement.setString(2, user.getPassword());
+            statement.setString(3, user.getRole().toString());
+            statement.setInt(4, user.getId());
+
+            ResultSet resultSet = statement.executeQuery();
+                if (resultSet.next()) {
+                    return user.toBuilder().id(resultSet.getInt("id")).build();
+                }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    public boolean delete(Integer id) {
+        String deleteSQL = "DELETE FROM car_shop.user WHERE id = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(deleteSQL)) {
+            statement.setInt(1, id);
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
     public List<UserModel> findAll() {
-        return userList;
-    }
-    public boolean isUsernameUnique(String username) {
-        return userList.stream().noneMatch(user -> user.getUsername().equals(username));
+        List<UserModel> users = new ArrayList<>();
+        String query = "SELECT id, username, password, role FROM car_shop.user";
+
+        try (Connection connection = DBConnection.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+
+            while (resultSet.next()) {
+                UserModel user = UserModel.builder()
+                        .id(resultSet.getInt("id"))
+                        .username(resultSet.getString("username"))
+                        .password(resultSet.getString("password"))
+                        .role(RoleEnum.valueOf(resultSet.getString("role")))
+                        .build();
+                users.add(user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
     }
 
+
     public boolean authorization(String username, String password) {
-        return userList.stream()
-                .anyMatch(userModel -> userModel.getUsername().equals(username) &&
-                        userModel.getPassword().equals(password));
+        String authorizationSQL = "SELECT id FROM car_shop.user WHERE username = ? AND password = ?";
+        try(Connection connection = DBConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(authorizationSQL)) {
+            statement.setString(1,username);
+            statement.setString(2,password);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt(1) > 0;
+            }
+
+        }catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public UserModel findByUsername(String username) {
+        String findByUsernameSQL = "SELECT * FROM car_shop.user WHERE username = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(findByUsernameSQL)) {
+            statement.setString(1, username);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return UserModel.builder()
+                        .id(resultSet.getInt("id"))
+                        .username(resultSet.getString("username"))
+                        .password(resultSet.getString("password"))
+                        .role(RoleEnum.valueOf(resultSet.getString("role")))
+                        .build();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }

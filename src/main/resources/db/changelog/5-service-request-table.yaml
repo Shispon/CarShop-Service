@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: postgres
+      changes:
+        - createTable:
+            tableName: service_request
+            schemaName: car_shop
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: car_brand
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: car_model
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: username
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: service_type
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: car_id
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: INT
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: service_request
+            baseTableSchemaName: car_shop
+            baseColumnNames: car_id
+            constraintName: fk_service_request_car
+            referencedTableName: car
+            referencedTableSchemaName: car_shop
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: service_request
+            baseTableSchemaName: car_shop
+            baseColumnNames: user_id
+            constraintName: fk_service_request_user
+            referencedTableName: user
+            referencedTableSchemaName: car_shop
+            referencedColumnNames: id
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE car_shop.service_request
+              ADD CONSTRAINT chk_service_type
+              CHECK (service_type IN ('WASH', 'REPAIR', 'PREVENTIVE_MAINTENANCE'));
+              ALTER TABLE car_shop.service_request
+              ADD CONSTRAINT chk_status
+              CHECK (status IN ('IN_PROCESSING', 'STARTED', 'READY'));

@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4
+      author: postgres
+      changes:
+        - createTable:
+            tableName: order
+            schemaName: car_shop
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: car_id
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: order
+            baseTableSchemaName: car_shop
+            baseColumnNames: car_id
+            constraintName: fk_order_buy_car
+            referencedTableName: car
+            referencedTableSchemaName: car_shop
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: order
+            baseTableSchemaName: car_shop
+            baseColumnNames: user_id
+            constraintName: fk_order_buy_user
+            referencedTableName: user
+            referencedTableSchemaName: car_shop
+            referencedColumnNames: id
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE car_shop.order
+              ADD CONSTRAINT chk_status
+              CHECK (status IN ('IN_PROCESSING', 'STARTED', 'READY'));

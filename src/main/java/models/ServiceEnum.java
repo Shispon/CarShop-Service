@@ -3,5 +3,5 @@ package models;
 public enum ServiceEnum {
     WASH,
     REPAIR,
-    PREVENTIVEMAINTENANCE
+    PREVENTIVE_MAINTENANCE
 }

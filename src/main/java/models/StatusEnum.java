@@ -1,7 +1,7 @@
 package models;
 
 public enum StatusEnum {
-    INPROCESSING,
+    IN_PROCESSING,
     STARTED,
     READY
 }

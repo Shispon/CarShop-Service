@@ -39,12 +39,16 @@ public class UserDisplay {
         String username = scanner.nextLine();
         System.out.print("Введите пароль: ");
         String password = scanner.nextLine();
-        System.out.print("Введите роль (ADMIN,MANAGER,CLIENT): ");
-        String roleS = scanner.nextLine();
-        RoleEnum role = RoleEnum.valueOf(roleS);
-        UserModel user = new UserModel(username, password, role);
-        userService.registerUser(user);
-        System.out.println("Пользователь успешно зарегистрирован.");
+        System.out.print("Введите роль (ADMIN, MANAGER, CLIENT): ");
+        String roleS = scanner.nextLine().toUpperCase(); // Приведение к верхнему регистру
+        try {
+            RoleEnum role = RoleEnum.valueOf(roleS); // Проверка на допустимое значение
+            UserModel user = new UserModel(username, password, role);
+            userService.registerUser(user);
+            System.out.println("Пользователь успешно зарегистрирован.");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Ошибка: некорректная роль. Доступные роли: ADMIN, MANAGER, CLIENT.");
+        }
     }
 
     public void loginUser(Scanner scanner) {

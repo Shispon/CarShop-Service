@@ -1,8 +1,10 @@
 package menu;
 
 import models.CarModel;
+import models.UserModel;
 import service.AuditService;
 import service.CarService;
+import service.UserService;
 
 import java.util.List;
 import java.util.Scanner;
@@ -10,12 +12,13 @@ import java.util.Scanner;
 public class CarDisplay {
     private final CarService carService;
     private final AuditService auditService;
+    private final UserService userService;
 
 
-    public CarDisplay(CarService carService, AuditService auditService) {
+    public CarDisplay(CarService carService, AuditService auditService, UserService userService) {
         this.carService = carService;
         this.auditService = auditService;
-
+        this.userService = userService;
     }
 
     public void manageCars(Scanner scanner) {
@@ -91,10 +94,17 @@ public class CarDisplay {
         double price = Double.parseDouble(scanner.nextLine());
         System.out.print("Состояние: ");
         String condition = scanner.nextLine();
+
         CarModel car = new CarModel(brand, model, year, price, condition);
         carService.addCar(car);
-        auditService.addAction("Добавление автомобиля", "admin");
-        System.out.println("Автомобиль добавлен.");
+
+        UserModel currentUser = userService.getCurrentUser();
+        if (currentUser != null) {
+            auditService.addAction("Добавление автомобиля", currentUser.getUsername(), currentUser.getId());
+            System.out.println("Автомобиль добавлен и запись в аудит создана.");
+        } else {
+            System.out.println("Автомобиль добавлен, но запись в аудит не создана, так как пользователь не авторизован.");
+        }
     }
 
     private void updateCar(Scanner scanner) {
@@ -125,11 +135,12 @@ public class CarDisplay {
                     .price(newPrice)
                     .condition(newCondition)
                     .build();
+            UserModel currentUser = userService.getCurrentUser();
 
             // Обновляем автомобиль через сервис
             if (carService.updateCar(updatedCar)) {
                 // Добавляем запись в аудит
-                auditService.addAction("Редактирование автомобиля", "admin");
+                auditService.addAction("Редактирование автомобиля", "admin",currentUser.getId());
                 System.out.println("Автомобиль обновлен.");
             } else {
                 System.out.println("Ошибка при обновлении автомобиля.");
@@ -142,8 +153,9 @@ public class CarDisplay {
     private void deleteCar(Scanner scanner) {
         System.out.print("ID автомобиля: ");
         int carIdToDelete = Integer.parseInt(scanner.nextLine());
+        UserModel currentUser = userService.getCurrentUser();
         if (carService.deleteCar(carIdToDelete)) {
-            auditService.addAction("Удаление автомобиля", "admin");
+            auditService.addAction("Удаление автомобиля", "admin", currentUser.getId());
             System.out.println("Автомобиль удален.");
         } else {
             System.out.println("Автомобиль не найден.");

@@ -2,8 +2,10 @@ package menu;
 
 import models.OrderModel;
 import models.StatusEnum;
+import models.UserModel;
 import service.AuditService;
 import service.OrderService;
+import service.UserService;
 
 import java.util.List;
 import java.util.Scanner;
@@ -11,12 +13,13 @@ import java.util.Scanner;
 public class OrderDisplay {
     private final OrderService orderService;
     private final AuditService auditService;
+    private final UserService userService;
 
 
-    public OrderDisplay(OrderService orderService, AuditService auditService) {
+    public OrderDisplay(OrderService orderService, AuditService auditService, UserService userService) {
         this.orderService = orderService;
         this.auditService = auditService;
-
+        this.userService = userService;
     }
 
     public void manageOrders(Scanner scanner) {
@@ -54,13 +57,14 @@ public class OrderDisplay {
         System.out.print("Статус заказа(inProcessing,\n" +
                 "    started,\n" +
                 "    ready: ");
-        String statusS = scanner.nextLine();
+        String statusS = scanner.nextLine().toUpperCase();
         StatusEnum status = StatusEnum.valueOf(statusS);
         OrderModel order = new OrderModel( carId, userID, status);
+        UserModel currentUser = userService.getCurrentUser();
         if(orderService.searchOrdersByUserIdAndCarID(userID,carId).isEmpty()) {
             orderService.addOrder(order);
         }
-        auditService.addAction("Создание заказа", "admin");
+        auditService.addAction("Создание заказа", "admin",currentUser.getId());
         System.out.println("Заказ создан.");
     }
 
@@ -80,10 +84,10 @@ public class OrderDisplay {
                     .status(newStatus) // Обновляем статус
                     .build();
 
-            // Обновляем заказ через сервис
+            UserModel currentUser = userService.getCurrentUser();
             if (orderService.updateOrder(updatedOrder)) {
                 // Добавляем запись в аудит
-                auditService.addAction("Редактирование заказа", "admin");
+                auditService.addAction("Редактирование заказа", "admin",currentUser.getId());
                 System.out.println("Заказ обновлен.");
             } else {
                 System.out.println("Ошибка при обновлении заказа.");
@@ -96,8 +100,9 @@ public class OrderDisplay {
     private void deleteOrder(Scanner scanner) {
         System.out.print("ID заказа: ");
         int orderIdToDelete = Integer.parseInt(scanner.nextLine());
+        UserModel currentUser = userService.getCurrentUser();
         if (orderService.deleteOrder(orderIdToDelete)) {
-            auditService.addAction("Удаление заказа", "admin");
+            auditService.addAction("Удаление заказа", "admin",currentUser.getId());
             System.out.println("Заказ удален.");
         } else {
             System.out.println("Заказ не найден.");
