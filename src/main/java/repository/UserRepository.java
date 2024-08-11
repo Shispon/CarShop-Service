@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserRepository implements CrudRepository<UserModel, Integer>  {
-    private final List<UserModel> userList= new ArrayList<>();
-    private Integer id = 0;
 
     public boolean isUsernameUnique(String username) {
         String query = "SELECT COUNT(*) FROM car_shop.user WHERE username = ?";
