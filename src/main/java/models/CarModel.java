@@ -8,12 +8,12 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class CarModel {
-    private final Integer id;
-    private final String brand;
-    private final String model;
-    private final Integer year;
-    private final Double price;
-    private final String condition;
+    private Integer id;
+    private String brand;
+    private String model;
+    private Integer year;
+    private Double price;
+    private String condition;
 
     public CarModel( String brand, String model, Integer year, Double price, String condition) {
         this.id = -1;

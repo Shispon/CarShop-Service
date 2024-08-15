@@ -3,8 +3,10 @@ package menu;
 import models.RequestModel;
 import models.ServiceEnum;
 import models.StatusEnum;
+import models.UserModel;
 import service.AuditService;
 import service.RequestService;
+import service.UserService;
 
 import java.util.List;
 import java.util.Scanner;
@@ -12,11 +14,13 @@ import java.util.Scanner;
 public class RequestDisplay {
     private final RequestService requestService;
     private final AuditService auditService;
+    private final UserService userService;
 
 
-    public RequestDisplay(RequestService orderService, AuditService auditService) {
+    public RequestDisplay(RequestService orderService, AuditService auditService, UserService userService) {
         this.requestService = orderService;
         this.auditService = auditService;
+        this.userService = userService;
     }
 
     public void manageServiceRequests(Scanner scanner) {
@@ -59,7 +63,8 @@ public class RequestDisplay {
         String status = scanner.nextLine();
         RequestModel request =new RequestModel(carBrand,carModel,username, ServiceEnum.valueOf(serviceType), StatusEnum.valueOf(status));
         requestService.addRequest(request);
-        auditService.addAction("Создание заказа на обслуживание", "admin");
+        UserModel currentUser = userService.getCurrentUser();
+        auditService.addAction("Создание заказа на обслуживание", "admin",currentUser.getId());
         System.out.println("Заказ на обслуживание создан.");
     }
 
@@ -92,10 +97,10 @@ public class RequestDisplay {
                     .status(newStatus)
                     .build();
 
-            // Обновляем запрос через сервис
+            UserModel currentUser = userService.getCurrentUser();
             if (requestService.updateRequest(updatedRequest)) {
                 // Добавляем запись в аудит
-                auditService.addAction("Редактирование заказа на обслуживание", "admin");
+                auditService.addAction("Редактирование заказа на обслуживание", "admin",currentUser.getId());
                 System.out.println("Заказ на обслуживание обновлен.");
             } else {
                 System.out.println("Ошибка при обновлении заказа на обслуживание.");
@@ -108,8 +113,9 @@ public class RequestDisplay {
     private void deleteServiceRequest(Scanner scanner) {
         System.out.print("ID заказ: ");
         Integer id = Integer.parseInt(scanner.nextLine());
+        UserModel currentUser = userService.getCurrentUser();
         if (requestService.deleteRequestById(id)) {
-            auditService.addAction("Удаление заказа на обслуживание", "admin");
+            auditService.addAction("Удаление заказа на обслуживание", "admin",currentUser.getId());
             System.out.println("Заказ на обслуживание удален.");
         } else {
             System.out.println("Заказ на обслуживание не найден.");

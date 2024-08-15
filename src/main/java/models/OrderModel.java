@@ -8,10 +8,10 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder(toBuilder=true)
 public class OrderModel {
-    private final Integer id;
-    private final Integer carId;
-    private final Integer userId;
-    private final StatusEnum status;
+    private Integer id;
+    private Integer carId;
+    private Integer userId;
+    private StatusEnum status;
     public OrderModel(Integer carId, Integer userId, StatusEnum status) {
         this.id = -1;
         this.carId = carId;

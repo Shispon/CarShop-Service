@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: postgres
+      changes:
+        - createTable:
+            tableName: car
+            schemaName: car_shop
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: brand
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: model
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: year
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: price
+                  type: double precision
+                  constraints:
+                    nullable: false
+              - column:
+                  name: condition
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false

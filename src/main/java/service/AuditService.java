@@ -15,11 +15,12 @@ public class AuditService {
         this.auditRepository = auditRepository;
         id = 0;
     }
-    public void addAction(String action, String username) {
+    public void addAction(String action, String username, Integer userId) {
         AuditModel newAudit = AuditModel.builder()
                 .id(id++)
                 .action(action)
                 .username(username)
+                .userId(userId)
                 .build();
         auditRepository.create(newAudit);
     }
